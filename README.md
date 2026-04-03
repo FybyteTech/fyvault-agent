@@ -1,6 +1,6 @@
 # FyVault Agent
 
-The eBPF-powered agent daemon, CLI, and installer for [FyVault](https://fyvault.dev) — secure, zero-trust secret delivery to Linux servers.
+The eBPF-powered agent daemon, CLI, and installer for [FyVault](https://fyvault.com) — secure, zero-trust secret delivery to Linux servers.
 
 **Related repos:**
 - [fyvault-cloud](https://github.com/fybyte/fyvault-cloud) — Cloud API (Node.js)
@@ -28,7 +28,7 @@ Binaries are output to `bin/`.
 ## Install (Linux)
 
 ```bash
-curl -fsSL https://get.fyvault.dev | sudo sh
+curl -fsSL https://get.fyvault.com | sudo sh
 ```
 
 Or see `installer/install.sh` for the full installer script.

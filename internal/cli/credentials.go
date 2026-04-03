@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/fybyte/fyvault-agent/internal/config"
 )
 
 // Credentials holds authentication state persisted to disk.
@@ -64,7 +66,7 @@ func getAPIURL(creds *Credentials) string {
 	if creds != nil && creds.APIUrl != "" {
 		return creds.APIUrl
 	}
-	return "http://localhost:4000/api/v1"
+	return config.DefaultCloudAPIURL
 }
 
 // getOrgID resolves the org ID from flag > env > credentials.
