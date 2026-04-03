@@ -5,9 +5,10 @@ import (
 )
 
 var (
-	apiURL string
-	orgID  string
-	format string // "table" or "json"
+	apiURL  string
+	orgID   string
+	format  string // "table" or "json"
+	envName string // environment name (e.g. "development", "staging", "production")
 )
 
 var rootCmd = &cobra.Command{
@@ -41,6 +42,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&apiURL, "api-url", "", "FyVault API URL (overrides credentials and env)")
 	rootCmd.PersistentFlags().StringVar(&orgID, "org", "", "Organization ID (overrides credentials and env)")
 	rootCmd.PersistentFlags().StringVar(&format, "format", "table", "Output format: table, json")
+	rootCmd.PersistentFlags().StringVar(&envName, "env", "", "Environment name (e.g. development, staging, production)")
 
 	// Auth
 	rootCmd.AddCommand(loginCmd)
@@ -59,6 +61,11 @@ func init() {
 	rootCmd.AddCommand(secretsSetCmd)
 	rootCmd.AddCommand(secretsDeleteCmd)
 	rootCmd.AddCommand(secretsVersionsCmd)
+
+	// Environments
+	rootCmd.AddCommand(envsCmd)
+	rootCmd.AddCommand(envsCreateCmd)
+	rootCmd.AddCommand(envsPullCmd)
 
 	// Devices
 	rootCmd.AddCommand(devicesCmd)

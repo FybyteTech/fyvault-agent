@@ -52,8 +52,12 @@ func runRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no organization selected. Run 'fyvault use <org-id>'")
 	}
 
-	// Fetch secrets list
-	resp, err := apiRequest("GET", "/orgs/"+oid+"/secrets", nil)
+	// Fetch secrets list (scoped to environment if --env is set)
+	secretsURL := "/orgs/" + oid + "/secrets"
+	if envName != "" {
+		secretsURL += "?environment=" + envName
+	}
+	resp, err := apiRequest("GET", secretsURL, nil)
 	if err != nil {
 		return fmt.Errorf("failed to fetch secrets: %w", err)
 	}
@@ -75,7 +79,11 @@ func runRun(cmd *cobra.Command, args []string) error {
 	for _, s := range secrets {
 		if s.Value == "" {
 			// If values aren't returned in list, try fetching individually
-			valResp, valErr := apiRequest("GET", "/orgs/"+oid+"/secrets/"+s.ID+"/value", nil)
+			valURL := "/orgs/" + oid + "/secrets/" + s.ID + "/value"
+			if envName != "" {
+				valURL += "?environment=" + envName
+			}
+			valResp, valErr := apiRequest("GET", valURL, nil)
 			if valErr != nil {
 				fmt.Fprintf(os.Stderr, "%s Skipping %s: value not available via API\n", yellow("WARN"), s.Name)
 				continue

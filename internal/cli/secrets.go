@@ -69,7 +69,11 @@ func runSecretsList(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("no organization selected. Run 'fyvault use <org-id>'")
 	}
 
-	resp, err := apiRequest("GET", "/orgs/"+oid+"/secrets", nil)
+	listURL := "/orgs/" + oid + "/secrets"
+	if envName != "" {
+		listURL += "?environment=" + envName
+	}
+	resp, err := apiRequest("GET", listURL, nil)
 	if err != nil {
 		return err
 	}
@@ -349,7 +353,11 @@ func runSecretsVersions(_ *cobra.Command, args []string) error {
 
 // findSecretByName fetches the secrets list and finds one by name.
 func findSecretByName(orgID, name string) (*secretItem, error) {
-	resp, err := apiRequest("GET", "/orgs/"+orgID+"/secrets", nil)
+	findURL := "/orgs/" + orgID + "/secrets"
+	if envName != "" {
+		findURL += "?environment=" + envName
+	}
+	resp, err := apiRequest("GET", findURL, nil)
 	if err != nil {
 		return nil, err
 	}
