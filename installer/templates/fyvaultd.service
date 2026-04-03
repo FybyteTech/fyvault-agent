@@ -1,0 +1,23 @@
+[Unit]
+Description=FyVault Agent Daemon
+Documentation=https://docs.fyvault.dev
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=fyvault
+Group=fyvault
+ExecStart=/usr/local/bin/fyvaultd --config /etc/fyvault/fyvault.conf
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/fyvault /var/log/fyvault
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
