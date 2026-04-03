@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
-	"os"
-	"path/filepath"
 	"time"
 
 	"go.uber.org/zap"
@@ -13,35 +11,29 @@ import (
 	"github.com/fybyte/fyvault-agent/internal/keyring"
 )
 
-// Server exposes agent health over a Unix domain socket.
+// Server exposes agent health over a platform-appropriate listener
+// (Unix socket on Linux/macOS, TCP on Windows).
 type Server struct {
-	socketPath string
-	startTime  time.Time
-	keyring    *keyring.Keyring
-	logger     *zap.Logger
-	listener   net.Listener
+	addr      string
+	startTime time.Time
+	keyring   *keyring.Keyring
+	logger    *zap.Logger
+	listener  net.Listener
 }
 
-// New creates a health server bound to the given Unix socket path.
-func New(socketPath string, kr *keyring.Keyring, logger *zap.Logger) *Server {
+// New creates a health server bound to the given address.
+func New(addr string, kr *keyring.Keyring, logger *zap.Logger) *Server {
 	return &Server{
-		socketPath: socketPath,
-		startTime:  time.Now(),
-		keyring:    kr,
-		logger:     logger,
+		addr:      addr,
+		startTime: time.Now(),
+		keyring:   kr,
+		logger:    logger,
 	}
 }
 
-// Start begins serving health status on the Unix socket.
+// Start begins serving health status.
 func (s *Server) Start() error {
-	// Remove stale socket file if present.
-	os.Remove(s.socketPath)
-
-	if err := os.MkdirAll(filepath.Dir(s.socketPath), 0755); err != nil {
-		return err
-	}
-
-	listener, err := net.Listen("unix", s.socketPath)
+	listener, err := platformListen(s.addr)
 	if err != nil {
 		return err
 	}
@@ -56,7 +48,7 @@ func (s *Server) Start() error {
 		}
 	}()
 
-	s.logger.Info("health server listening", zap.String("socket", s.socketPath))
+	s.logger.Info("health server listening", zap.String("addr", s.addr))
 	return nil
 }
 
@@ -69,12 +61,12 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Stop shuts down the health server and removes the socket file.
+// Stop shuts down the health server and cleans up.
 func (s *Server) Stop() {
 	if s.listener != nil {
 		s.listener.Close()
 	}
-	os.Remove(s.socketPath)
+	platformCleanup(s.addr)
 }
 
 func isClosedError(err error) bool {

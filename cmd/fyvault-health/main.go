@@ -9,17 +9,25 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"runtime"
+
+	"github.com/fybyte/fyvault-agent/internal/config"
 )
 
-var socketPath = flag.String("socket", "/var/run/fyvault/health.sock", "health socket path")
+var healthAddr = flag.String("addr", config.DefaultHealthAddr(), "health endpoint address (socket path or host:port)")
 
 func main() {
 	flag.Parse()
 
+	network := "unix"
+	if runtime.GOOS == "windows" {
+		network = "tcp"
+	}
+
 	client := &http.Client{
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return net.Dial("unix", *socketPath)
+				return net.Dial(network, *healthAddr)
 			},
 		},
 	}

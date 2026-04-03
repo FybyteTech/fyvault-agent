@@ -1,10 +1,10 @@
-//go:build !linux
+//go:build !linux && !darwin && !windows
 
 package keyring
 
 import "fmt"
 
-// Keyring is an in-memory stub used on non-Linux platforms (e.g. macOS dev).
+// Keyring is an in-memory fallback for unsupported platforms.
 type Keyring struct {
 	namespace string
 	store     map[string][]byte
