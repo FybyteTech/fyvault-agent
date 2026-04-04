@@ -47,3 +47,22 @@ test:
 
 clean:
 	rm -rf bin/
+
+# eBPF compilation (requires Linux with clang and kernel headers)
+ebpf:
+	clang -O2 -g -target bpf -D__TARGET_ARCH_x86 \
+		-I/usr/include -I/usr/include/x86_64-linux-gnu \
+		-c ebpf/tc_redirect.c -o ebpf/tc_redirect.o
+	@echo "eBPF object compiled: ebpf/tc_redirect.o"
+
+# eBPF for ARM64
+ebpf-arm64:
+	clang -O2 -g -target bpf -D__TARGET_ARCH_arm64 \
+		-I/usr/include -I/usr/include/aarch64-linux-gnu \
+		-c ebpf/tc_redirect.c -o ebpf/tc_redirect_arm64.o
+	@echo "eBPF object compiled: ebpf/tc_redirect_arm64.o"
+
+# Full Linux build with eBPF
+build-linux-full: ebpf build-linux
+	cp ebpf/tc_redirect.o bin/linux-amd64/
+	@echo "Full Linux build with eBPF complete"

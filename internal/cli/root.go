@@ -61,6 +61,7 @@ func init() {
 	rootCmd.AddCommand(secretsSetCmd)
 	rootCmd.AddCommand(secretsDeleteCmd)
 	rootCmd.AddCommand(secretsVersionsCmd)
+	rootCmd.AddCommand(secretsRotateCmd)
 
 	// Environments
 	rootCmd.AddCommand(envsCmd)
@@ -71,6 +72,17 @@ func init() {
 	rootCmd.AddCommand(devicesCmd)
 	rootCmd.AddCommand(devicesRegisterCmd)
 	rootCmd.AddCommand(devicesAssignCmd)
+
+	// Import/Export
+	rootCmd.AddCommand(importCmd)
+	rootCmd.AddCommand(exportCmd)
+
+	// Sync & Generate
+	rootCmd.AddCommand(syncCmd)
+	rootCmd.AddCommand(generateCmd)
+
+	// Scan
+	rootCmd.AddCommand(scanCmd)
 
 	// Run
 	rootCmd.AddCommand(runCmd)

@@ -376,3 +376,50 @@ func findSecretByName(orgID, name string) (*secretItem, error) {
 
 	return nil, fmt.Errorf("secret '%s' not found", name)
 }
+
+// ── Rotate ─────────────────────────────────────────────
+
+var secretsRotateCmd = &cobra.Command{
+	Use:   "secrets:rotate [name]",
+	Short: "Rotate a secret (generate new value)",
+	Args:  cobra.ExactArgs(1),
+	RunE:  runSecretsRotate,
+}
+
+func runSecretsRotate(cmd *cobra.Command, args []string) error {
+	creds, err := loadCredentials()
+	if err != nil {
+		return err
+	}
+	oid := getOrgID(creds)
+	if oid == "" {
+		return fmt.Errorf("no organization selected. Run 'fyvault use <org-id>'")
+	}
+
+	secret, err := findSecretByName(oid, args[0])
+	if err != nil {
+		return err
+	}
+
+	rotateURL := "/orgs/" + oid + "/secrets/" + secret.ID + "/rotate"
+	if envName != "" {
+		rotateURL += "?environment=" + envName
+	}
+
+	resp, err := apiRequest("POST", rotateURL, map[string]interface{}{})
+	if err != nil {
+		return fmt.Errorf("failed to rotate secret: %w", err)
+	}
+
+	var result struct {
+		SecretID string `json:"secretId"`
+		Name     string `json:"name"`
+		Version  int    `json:"version"`
+	}
+	if err := json.Unmarshal(resp.Data, &result); err != nil {
+		return fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	fmt.Printf("%s Rotated %s → version %d\n", green("OK"), result.Name, result.Version)
+	return nil
+}
