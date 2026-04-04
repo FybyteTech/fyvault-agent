@@ -67,7 +67,7 @@ func applyDefaults(cfg *Config) {
 		cfg.Agent.LogLevel = "info"
 	}
 	if cfg.Agent.HealthSocket == "" {
-		cfg.Agent.HealthSocket = "/var/run/fyvault/health.sock"
+		cfg.Agent.HealthSocket = DefaultHealthAddr()
 	}
 	if cfg.Keyring.Namespace == "" {
 		cfg.Keyring.Namespace = "fyvault"

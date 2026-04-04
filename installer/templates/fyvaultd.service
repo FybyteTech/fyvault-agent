@@ -1,6 +1,6 @@
 [Unit]
 Description=FyVault Agent Daemon
-Documentation=https://docs.fyvault.dev
+Documentation=https://fyvault.com/docs
 After=network-online.target
 Wants=network-online.target
 

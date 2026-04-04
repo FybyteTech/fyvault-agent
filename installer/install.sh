@@ -4,7 +4,7 @@
 set -e
 
 FYVAULT_VERSION="${FYVAULT_VERSION:-latest}"
-FYVAULT_BASE_URL="${FYVAULT_BASE_URL:-https://releases.fyvault.dev}"
+FYVAULT_BASE_URL="${FYVAULT_BASE_URL:-https://releases.fyvault.com}"
 INSTALL_DIR="/usr/local/bin"
 CONFIG_DIR="/etc/fyvault"
 TLS_DIR="${CONFIG_DIR}/tls"
@@ -100,27 +100,21 @@ fi
 if [ ! -f "${CONFIG_DIR}/fyvault.conf" ]; then
     info "Writing default configuration..."
     cat > "${CONFIG_DIR}/fyvault.conf" << 'CONF'
-# FyVault Agent Configuration
+# FyVault Agent — url must include /api/v1 (override for staging: https://test.fyvault.com/api/v1)
 
-[server]
-api_url = "https://api.fyvault.dev"
-poll_interval = 300
-
-[device]
-# Device token obtained during registration
+[cloud]
+url = "https://api.fyvault.com/api/v1"
 token = ""
 
-[tls]
-cert_file = "/etc/fyvault/tls/device.crt"
-key_file = "/etc/fyvault/tls/device.key"
-ca_file = "/etc/fyvault/tls/ca.crt"
+[agent]
+heartbeat_interval = 300
+log_level = "info"
 
-[logging]
-level = "info"
-file = "/var/log/fyvault/agent.log"
+[keyring]
+namespace = "fyvault"
 
-[secrets]
-store_path = "/var/lib/fyvault/secrets"
+[network]
+interface = ""
 CONF
     chown root:"$FYVAULT_USER" "${CONFIG_DIR}/fyvault.conf"
     chmod 640 "${CONFIG_DIR}/fyvault.conf"
@@ -132,7 +126,7 @@ info "Installing systemd service..."
 cat > "${SYSTEMD_DIR}/fyvaultd.service" << 'UNIT'
 [Unit]
 Description=FyVault Agent Daemon
-Documentation=https://docs.fyvault.dev
+Documentation=https://fyvault.com/docs
 After=network-online.target
 Wants=network-online.target
 

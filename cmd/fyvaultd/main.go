@@ -24,7 +24,7 @@ import (
 
 var (
 	version    = "dev"
-	configPath = flag.String("config", "/etc/fyvault/fyvault.conf", "config file path")
+	configPath = flag.String("config", config.DefaultConfigPath(), "config file path")
 )
 
 func main() {

@@ -33,6 +33,11 @@ func (p *Program) RemoveTarget(ip net.IP, dstPort uint16) error {
 	return nil
 }
 
+// Stats returns zero counts on non-Linux platforms.
+func (p *Program) Stats() (redirected, passed uint64, err error) {
+	return 0, 0, nil
+}
+
 // Close is a no-op on non-Linux platforms.
 func (p *Program) Close() error {
 	return nil

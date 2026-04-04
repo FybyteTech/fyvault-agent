@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"github.com/fybyte/fyvault-agent/internal/config"
 )
 
 var loginCmd = &cobra.Command{
@@ -31,9 +33,9 @@ func runLogin(_ *cobra.Command, _ []string) error {
 	fmt.Println(bold("FyVault Login"))
 	fmt.Println()
 
-	// 1. API URL
-	urlInput := promptInput(fmt.Sprintf("API URL %s: ", dim("(default: http://localhost:4000/api/v1)")))
-	base := "http://localhost:4000/api/v1"
+	// 1. API URL (production default; use http://localhost:4000/api/v1 for local cloud)
+	urlInput := promptInput(fmt.Sprintf("API URL %s: ", dim(fmt.Sprintf("(default: %s)", config.DefaultCloudAPIURL))))
+	base := config.DefaultCloudAPIURL
 	if urlInput != "" {
 		base = urlInput
 	}
