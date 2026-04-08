@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -21,15 +23,17 @@ Usage:
 }
 
 var (
-	scanFile  string
-	scanText  string
-	scanStdin bool
+	scanFile   string
+	scanText   string
+	scanStdin  bool
+	scanStaged bool
 )
 
 func init() {
 	scanCmd.Flags().StringVar(&scanFile, "file", "", "Path to file to scan")
 	scanCmd.Flags().StringVar(&scanText, "text", "", "Text to scan directly")
 	scanCmd.Flags().BoolVar(&scanStdin, "stdin", false, "Read from stdin")
+	scanCmd.Flags().BoolVar(&scanStaged, "staged", false, "Scan git staged files (for pre-commit hooks)")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -45,6 +49,12 @@ func runScan(cmd *cobra.Command, args []string) error {
 	var content string
 
 	switch {
+	case scanStaged:
+		stagedContent, stagedErr := readStagedFiles()
+		if stagedErr != nil {
+			return stagedErr
+		}
+		content = stagedContent
 	case scanFile != "":
 		data, err := os.ReadFile(scanFile)
 		if err != nil {
@@ -60,7 +70,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 		content = string(data)
 	default:
-		return fmt.Errorf("specify --file, --text, or --stdin")
+		return fmt.Errorf("specify --file, --text, --stdin, or --staged")
 	}
 
 	sourceRef := scanFile
@@ -112,5 +122,58 @@ func runScan(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("\n  %s Consider rotating any exposed secrets immediately.\n", yellow(">>"))
+
+	// In --staged mode, block commit if HIGH confidence findings exist
+	if scanStaged {
+		hasHigh := false
+		for _, f := range result.Findings {
+			if strings.ToLower(f.Confidence) == "high" {
+				hasHigh = true
+				break
+			}
+		}
+		if hasHigh {
+			fmt.Printf("\n  %s Commit blocked — HIGH confidence secrets detected in staged files.\n", red("BLOCKED"))
+			os.Exit(1)
+		}
+		fmt.Printf("\n  %s Allowing commit — only MEDIUM/LOW findings detected.\n", yellow("PASS"))
+	}
+
 	return nil
+}
+
+// readStagedFiles uses git to read staged file contents and concatenate them.
+func readStagedFiles() (string, error) {
+	// Get list of staged files
+	cmd := exec.Command("git", "diff", "--cached", "--name-only")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get staged files: %w", err)
+	}
+
+	files := strings.Split(strings.TrimSpace(string(out)), "\n")
+	if len(files) == 0 || (len(files) == 1 && files[0] == "") {
+		return "", fmt.Errorf("no staged files found")
+	}
+
+	var allContent strings.Builder
+	for _, f := range files {
+		f = strings.TrimSpace(f)
+		if f == "" {
+			continue
+		}
+		data, readErr := os.ReadFile(f)
+		if readErr != nil {
+			continue // file might have been deleted
+		}
+		allContent.WriteString(fmt.Sprintf("# File: %s\n", f))
+		allContent.Write(data)
+		allContent.WriteString("\n")
+	}
+
+	if allContent.Len() == 0 {
+		return "", fmt.Errorf("no readable staged files found")
+	}
+
+	return allContent.String(), nil
 }

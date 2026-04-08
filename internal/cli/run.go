@@ -52,10 +52,23 @@ func runRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no organization selected. Run 'fyvault use <org-id>'")
 	}
 
+	// If .env.fyvault exists and no --env flag, use manifest for environment and secret list
+	effectiveEnv := envName
+	var manifestSecretNames []string
+
+	if effectiveEnv == "" && manifestExists() {
+		mEnv := loadManifestEnvironment()
+		if mEnv != "" {
+			effectiveEnv = mEnv
+			fmt.Fprintf(os.Stderr, "%s Using environment '%s' from .env.fyvault manifest\n", dim("INFO"), effectiveEnv)
+		}
+		manifestSecretNames = loadManifestSecretNames()
+	}
+
 	// Fetch secrets list (scoped to environment if --env is set)
 	secretsURL := "/orgs/" + oid + "/secrets"
-	if envName != "" {
-		secretsURL += "?environment=" + envName
+	if effectiveEnv != "" {
+		secretsURL += "?environment=" + effectiveEnv
 	}
 	resp, err := apiRequest("GET", secretsURL, nil)
 	if err != nil {
@@ -72,16 +85,28 @@ func runRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to parse secrets: %w", err)
 	}
 
+	// Build a set of manifest secret names for filtering (if manifest is in use)
+	manifestFilter := make(map[string]bool)
+	if len(manifestSecretNames) > 0 {
+		for _, n := range manifestSecretNames {
+			manifestFilter[strings.ToUpper(n)] = true
+		}
+	}
+
 	// Build environment: inherit current env + inject secrets
 	env := os.Environ()
 	injected := 0
 
 	for _, s := range secrets {
+		// If manifest is in use, only inject secrets listed in the manifest
+		if len(manifestFilter) > 0 && !manifestFilter[strings.ToUpper(s.Name)] {
+			continue
+		}
 		if s.Value == "" {
 			// If values aren't returned in list, try fetching individually
 			valURL := "/orgs/" + oid + "/secrets/" + s.ID + "/value"
-			if envName != "" {
-				valURL += "?environment=" + envName
+			if effectiveEnv != "" {
+				valURL += "?environment=" + effectiveEnv
 			}
 			valResp, valErr := apiRequest("GET", valURL, nil)
 			if valErr != nil {

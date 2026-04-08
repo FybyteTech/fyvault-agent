@@ -32,6 +32,20 @@ Commands:
   devices:register   Register a new device
   devices:assign     Assign a secret to a device
   run                Run a command with secrets as env vars
+  init               Scan .env files and import into FyVault
+  secrets:share      Create a one-time share link for a secret
+  hook:install       Install git pre-commit hook for leak scanning
+  hook:uninstall     Remove the FyVault pre-commit hook
+  pull               Fetch secrets from .env.fyvault manifest
+  manifest:validate  Check all required secrets exist
+  break-glass        Create emergency break-glass access session
+  sandbox:create     Create an ephemeral sandbox environment
+  sandbox:list       List active sandboxes
+  sandbox:destroy    Destroy a sandbox early
+  compliance:report  Generate a compliance report
+  secrets:deps       List secret dependencies
+  secrets:deps:add   Add a secret dependency
+  secrets:deps:remove Remove a secret dependency
   doctor             Check system requirements
   agent:status       Check agent status
   agent:logs         View agent logs
@@ -81,11 +95,46 @@ func init() {
 	rootCmd.AddCommand(syncCmd)
 	rootCmd.AddCommand(generateCmd)
 
+	// Agent Credentials
+	rootCmd.AddCommand(agentCredsCmd)
+	rootCmd.AddCommand(agentCredsCreateCmd)
+	rootCmd.AddCommand(agentCredsRevokeCmd)
+
 	// Scan
 	rootCmd.AddCommand(scanCmd)
 
 	// Run
 	rootCmd.AddCommand(runCmd)
+
+	// Init
+	rootCmd.AddCommand(initCmd)
+
+	// Share
+	rootCmd.AddCommand(secretsShareCmd)
+
+	// Hook
+	rootCmd.AddCommand(hookInstallCmd)
+	rootCmd.AddCommand(hookUninstallCmd)
+
+	// Manifest
+	rootCmd.AddCommand(pullCmd)
+	rootCmd.AddCommand(manifestValidateCmd)
+
+	// Break-glass
+	rootCmd.AddCommand(breakGlassCmd)
+
+	// Sandbox
+	rootCmd.AddCommand(sandboxCreateCmd)
+	rootCmd.AddCommand(sandboxListCmd)
+	rootCmd.AddCommand(sandboxDestroyCmd)
+
+	// Compliance
+	rootCmd.AddCommand(complianceReportCmd)
+
+	// Dependencies
+	rootCmd.AddCommand(secretsDepsCmd)
+	rootCmd.AddCommand(secretsDepsAddCmd)
+	rootCmd.AddCommand(secretsDepsRemoveCmd)
 
 	// System
 	rootCmd.AddCommand(doctorCmd)
