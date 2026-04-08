@@ -76,6 +76,10 @@ func main() {
 		logger.Fatal("boot sequence failed", zap.Error(err))
 	}
 
+	// Write token file for SDK auto-discovery.
+	boot.WriteTokenFile(cfg, logger)
+	defer boot.RemoveTokenFiles(logger)
+
 	// Start proxy manager.
 	proxyMgr := proxy.NewManager(kr, logger)
 	if err := proxyMgr.Configure(bootResp.Secrets); err != nil {
